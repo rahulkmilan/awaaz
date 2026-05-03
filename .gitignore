@@ -1,0 +1,13 @@
+# Awaaz - Environment & Secrets
+.env
+
+# Database
+awaaz.db
+
+# Python
+__pycache__/
+*.pyc
+
+# IDE
+.vscode/
+.idea/

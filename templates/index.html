@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Awaaz — Your Voice. Actually Heard.</title>
+  <meta name="description" content="AI-powered government complaint filing for India. Describe your problem, get a formal complaint drafted, and file it in minutes.">
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔊</text></svg>">
+</head>
+<body>
+  <!-- Background Effects -->
+  <div class="bg-grid"></div>
+  <div class="bg-glow"></div>
+  <div class="bg-glow-2"></div>
+
+  <!-- Loading Overlay -->
+  <div id="loading-overlay" class="loading-overlay">
+    <div class="loader"></div>
+    <div class="loading-text" id="loading-msg">Analyzing your complaint...</div>
+    <div class="loading-sub">This usually takes 3-5 seconds</div>
+  </div>
+
+  <!-- Navigation -->
+  <nav class="nav">
+    <div class="nav-inner">
+      <div class="nav-logo">Awaaz <span>v1.0</span></div>
+      <div class="nav-links">
+        <a href="#" class="nav-link active" data-view="hero-view" onclick="showView('hero-view')">Home</a>
+        <a href="#" class="nav-link" data-view="form-view" onclick="showView('form-view')">File Complaint</a>
+        <a href="#" class="nav-link btn btn-primary btn-sm" onclick="showView('form-view')">Get Started →</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ═══════════════════ HERO VIEW ═══════════════════ -->
+  <div id="hero-view" class="view active">
+    <section class="hero">
+      <div class="container">
+        <div class="hero-content">
+          <div class="hero-badge fade-up">
+            <span class="pulse"></span>
+            Now in Kochi
+          </div>
+          <h1 class="fade-up stagger-1">
+            Your Voice.<br>
+            <span class="highlight">Actually Heard.</span>
+          </h1>
+          <p class="hero-sub fade-up stagger-2">
+            Filing a government complaint shouldn't require a law degree. 
+            Describe your problem in plain language — Awaaz drafts your complaint, 
+            finds the right authority, and guides you through filing.
+          </p>
+          <div class="btn-group fade-up stagger-3">
+            <button class="btn btn-primary" onclick="showView('form-view')">
+              File a Complaint →
+            </button>
+            <a href="#how-it-works" class="btn btn-secondary">
+              How It Works
+            </a>
+          </div>
+          <div class="hero-stats fade-up stagger-4">
+            <div>
+              <div class="hero-stat-value">68%</div>
+              <div class="hero-stat-label">Crimes Unreported</div>
+            </div>
+            <div>
+              <div class="hero-stat-value">1.4%</div>
+              <div class="hero-stat-label">Complaints Become FIRs</div>
+            </div>
+            <div>
+              <div class="hero-stat-value">100+</div>
+              <div class="hero-stat-label">Broken Gov Portals</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- How It Works -->
+    <section class="section" id="how-it-works">
+      <div class="container">
+        <div class="section-header fade-up">
+          <h2>How Awaaz Works</h2>
+          <p>From frustration to filed complaint in under 5 minutes</p>
+        </div>
+        <div class="steps-flow fade-up">
+          <div class="step-item">
+            <div class="step-num">💬</div>
+            <h4>Describe</h4>
+            <p>Tell us what happened in your own words</p>
+          </div>
+          <div class="step-item">
+            <div class="step-num">🤖</div>
+            <h4>AI Analyzes</h4>
+            <p>We find the right authority & draft your complaint</p>
+          </div>
+          <div class="step-item">
+            <div class="step-num">📋</div>
+            <h4>Review</h4>
+            <p>Check the draft and evidence checklist</p>
+          </div>
+          <div class="step-item">
+            <div class="step-num">✅</div>
+            <h4>File</h4>
+            <p>Follow our step-by-step guide to submit</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Categories -->
+    <section class="section">
+      <div class="container">
+        <div class="section-header fade-up">
+          <h2>We Cover Every Complaint</h2>
+          <p>One platform for all government grievances</p>
+        </div>
+        <div class="cards-grid">
+          <div class="card fade-up stagger-1">
+            <div class="card-icon">🛡️</div>
+            <h3>Cybercrime</h3>
+            <p>UPI fraud, phishing, hacking, online scams, identity theft, sextortion</p>
+          </div>
+          <div class="card fade-up stagger-2">
+            <div class="card-icon">🛒</div>
+            <h3>Consumer Rights</h3>
+            <p>Defective products, refund issues, misleading ads, service complaints</p>
+          </div>
+          <div class="card fade-up stagger-3">
+            <div class="card-icon">🏛️</div>
+            <h3>Municipal Issues</h3>
+            <p>Potholes, garbage, water supply, street lights, encroachment</p>
+          </div>
+          <div class="card fade-up stagger-1">
+            <div class="card-icon">🚔</div>
+            <h3>Police / FIR</h3>
+            <p>Theft, harassment, stalking, assault — know your rights</p>
+          </div>
+          <div class="card fade-up stagger-2">
+            <div class="card-icon">🏠</div>
+            <h3>Real Estate (RERA)</h3>
+            <p>Builder delays, quality issues, registration fraud</p>
+          </div>
+          <div class="card fade-up stagger-3">
+            <div class="card-icon">📋</div>
+            <h3>RTI Requests</h3>
+            <p>Right to Information — get answers from any government body</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="section">
+      <div class="container">
+        <div class="form-card fade-up" style="text-align: center; max-width: 600px;">
+          <h2 style="margin-bottom: 12px;">Ready to Be Heard?</h2>
+          <p style="color: var(--text-secondary); margin-bottom: 24px;">
+            Stop fighting broken portals. Let Awaaz handle the paperwork.
+          </p>
+          <button class="btn btn-primary" onclick="showView('form-view')">
+            File Your Complaint Now →
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <div class="container">
+        <p>Built with conviction in <span class="highlight">Kochi</span> 🇮🇳 — Because every citizen deserves to be heard.</p>
+      </div>
+    </footer>
+  </div>
+
+  <!-- ═══════════════════ FORM VIEW ═══════════════════ -->
+  <div id="form-view" class="view" style="display:none; padding-top: 100px;">
+    <section class="complaint-section">
+      <div class="container">
+        <div class="section-header fade-up">
+          <h2>What Happened?</h2>
+          <p>Describe your problem in your own words. Be as detailed as possible.</p>
+        </div>
+
+        <div class="form-card fade-up">
+          <form id="complaint-form">
+            <div class="form-group">
+              <label class="form-label" for="complaint-text">Your Complaint</label>
+              <textarea
+                id="complaint-text"
+                class="form-textarea"
+                placeholder="Example: I received a call from someone pretending to be from my bank. They asked for my OTP and ₹25,000 was transferred from my account..."
+                required
+                minlength="10"
+              ></textarea>
+              <div class="form-hint">
+                <a href="#" onclick="fillExample(); return false;" style="color: var(--accent); text-decoration: none;">
+                  ✨ Try an example complaint
+                </a>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="user-name">Your Name (optional)</label>
+                <input type="text" id="user-name" class="form-input" placeholder="Rahul">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="user-email">Email (optional)</label>
+                <input type="email" id="user-email" class="form-input" placeholder="rahul@email.com">
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; margin-top: 8px;">
+              🔊 Analyze & Draft My Complaint
+            </button>
+          </form>
+        </div>
+
+        <div style="text-align: center; margin-top: 20px;">
+          <a href="#" onclick="showView('hero-view'); return false;" class="nav-link">← Back to Home</a>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ═══════════════════ RESULTS VIEW ═══════════════════ -->
+  <div id="results-view" class="view" style="display:none; padding-top: 100px;">
+    <section class="section">
+      <div class="container">
+        <!-- Header -->
+        <div class="result-header fade-up">
+          <div class="result-tracking" id="result-tracking-id">AWZ-2026-XXXXXX</div>
+          <h2>Your Complaint is Ready</h2>
+          <p style="color: var(--text-secondary); margin-top: 8px;" id="ai-mode">⚡ Smart Analysis</p>
+          <div id="result-category" style="margin-top: 12px; font-size: 0.9rem; color: var(--accent); font-weight: 600;"></div>
+        </div>
+
+        <!-- Summary -->
+        <div class="result-card fade-up">
+          <h3><span class="icon">📋</span> Summary</h3>
+          <p id="result-summary" style="color: var(--text-secondary); line-height: 1.7;"></p>
+        </div>
+
+        <!-- Authority -->
+        <div class="result-card fade-up">
+          <h3><span class="icon">🏛️</span> Where to File</h3>
+          <div class="authority-badge">
+            <div>
+              <div class="name" id="authority-name"></div>
+              <a class="portal" id="authority-portal" href="#" target="_blank"></a>
+              <div class="portal" id="authority-helpline" style="color: var(--text-secondary); margin-top: 4px;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Draft -->
+        <div class="result-card fade-up">
+          <h3><span class="icon">📝</span> Your Formal Complaint (AI-Drafted)</h3>
+          <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 12px;">
+            Review, edit if needed, then copy and paste into the official portal.
+          </p>
+          <div class="draft-box" style="position: relative;">
+            <button class="copy-btn" onclick="copyDraft()">Copy</button>
+            <pre id="draft-content" style="margin:0; font-family: inherit; white-space: pre-wrap;"></pre>
+          </div>
+        </div>
+
+        <!-- Filing Guide -->
+        <div class="result-card fade-up">
+          <h3><span class="icon">🗺️</span> Step-by-Step Filing Guide</h3>
+          <ol class="step-list" id="filing-guide-list"></ol>
+        </div>
+
+        <!-- Evidence -->
+        <div class="result-card fade-up">
+          <h3><span class="icon">📎</span> Evidence Checklist</h3>
+          <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 12px;">
+            Gather these before filing:
+          </p>
+          <ul class="checklist" id="evidence-list"></ul>
+        </div>
+
+        <!-- Legal Rights -->
+        <div class="result-card fade-up">
+          <h3><span class="icon">⚖️</span> Your Legal Rights</h3>
+          <ul class="rights-list" id="rights-list"></ul>
+        </div>
+
+        <!-- Actions -->
+        <div style="text-align: center; margin-top: 32px;" class="fade-up">
+          <div class="btn-group">
+            <button class="btn btn-primary" onclick="newComplaint()">
+              📝 File Another Complaint
+            </button>
+            <button class="btn btn-secondary" onclick="window.print()">
+              🖨️ Print / Save as PDF
+            </button>
+          </div>
+          <p style="color: var(--text-muted); font-size: 0.8rem; margin-top: 16px;">
+            Save your tracking ID: <strong id="result-tracking-id-2"></strong>
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <div class="container">
+        <p>Built with conviction in <span class="highlight">Kochi</span> 🇮🇳</p>
+      </div>
+    </footer>
+  </div>
+
+  <script src="/static/js/app.js"></script>
+  <script>
+    // View switching
+    document.querySelectorAll('.view').forEach(v => {
+      if (!v.classList.contains('active')) v.style.display = 'none';
+    });
+
+    const origShowView = showView;
+    window.showView = function(id) {
+      document.querySelectorAll('.view').forEach(v => {
+        v.style.display = 'none';
+        v.classList.remove('active');
+      });
+      const view = document.getElementById(id);
+      if (view) {
+        view.style.display = 'block';
+        view.classList.add('active');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+
+        // Re-trigger scroll animations
+        setTimeout(() => {
+          view.querySelectorAll('.fade-up').forEach(el => el.classList.add('visible'));
+        }, 100);
+      }
+
+      // Duplicate tracking ID
+      const t1 = document.getElementById('result-tracking-id');
+      const t2 = document.getElementById('result-tracking-id-2');
+      if (t1 && t2) t2.textContent = t1.textContent;
+
+      // Update nav
+      document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+    };
+  </script>
+</body>
+</html>
