@@ -24,10 +24,11 @@
   <!-- Navigation -->
   <nav class="nav">
     <div class="nav-inner">
-      <div class="nav-logo">Awaaz <span>v1.0</span></div>
+      <div class="nav-logo">Awaaz <span>v2.0</span></div>
       <div class="nav-links">
         <a href="#" class="nav-link active" data-view="hero-view" onclick="showView('hero-view')">Home</a>
         <a href="#" class="nav-link" data-view="form-view" onclick="showView('form-view')">File Complaint</a>
+        <a href="#" class="nav-link" data-view="dashboard-view" onclick="showView('dashboard-view'); loadDashboard();">Dashboard</a>
         <a href="#" class="nav-link btn btn-primary btn-sm" onclick="showView('form-view')">Get Started →</a>
       </div>
     </div>
@@ -49,7 +50,7 @@
           <p class="hero-sub fade-up stagger-2">
             Filing a government complaint shouldn't require a law degree. 
             Describe your problem in plain language — Awaaz drafts your complaint, 
-            finds the right authority, and guides you through filing.
+            finds the right authority, and gives you a ready-to-file PDF.
           </p>
           <div class="btn-group fade-up stagger-3">
             <button class="btn btn-primary" onclick="showView('form-view')">
@@ -96,14 +97,14 @@
             <p>We find the right authority & draft your complaint</p>
           </div>
           <div class="step-item">
-            <div class="step-num">📋</div>
-            <h4>Review</h4>
-            <p>Check the draft and evidence checklist</p>
+            <div class="step-num">📄</div>
+            <h4>Download PDF</h4>
+            <p>Get a formal, printable complaint letter</p>
           </div>
           <div class="step-item">
-            <div class="step-num">✅</div>
-            <h4>File</h4>
-            <p>Follow our step-by-step guide to submit</p>
+            <div class="step-num">💬</div>
+            <h4>Share</h4>
+            <p>Send to anyone via WhatsApp instantly</p>
           </div>
         </div>
       </div>
@@ -289,12 +290,18 @@
 
         <!-- Actions -->
         <div style="text-align: center; margin-top: 32px;" class="fade-up">
-          <div class="btn-group">
-            <button class="btn btn-primary" onclick="newComplaint()">
-              📝 File Another Complaint
+          <div class="btn-group" style="flex-wrap: wrap; justify-content: center;">
+            <button class="btn btn-primary" id="btn-download-pdf" onclick="downloadPDF()">
+              📄 Download PDF
             </button>
-            <button class="btn btn-secondary" onclick="window.print()">
-              🖨️ Print / Save as PDF
+            <button class="btn btn-secondary" id="btn-whatsapp" onclick="shareWhatsApp()" style="background: #25D366; border-color: #25D366; color: #fff;">
+              💬 Share via WhatsApp
+            </button>
+            <button class="btn btn-secondary" onclick="copyDraft()">
+              📋 Copy Draft
+            </button>
+            <button class="btn btn-secondary" onclick="newComplaint()">
+              📝 File Another
             </button>
           </div>
           <p style="color: var(--text-muted); font-size: 0.8rem; margin-top: 16px;">
@@ -309,6 +316,47 @@
         <p>Built with conviction in <span class="highlight">Kochi</span> 🇮🇳</p>
       </div>
     </footer>
+  </div>
+
+  <!-- ═══════════════════ DASHBOARD VIEW ═══════════════════ -->
+  <div id="dashboard-view" class="view" style="display:none; padding-top: 100px;">
+    <section class="section">
+      <div class="container">
+        <div class="section-header fade-up">
+          <h2>📊 Complaint Dashboard</h2>
+          <p>Track all filed complaints and their status</p>
+        </div>
+
+        <!-- Stats Row -->
+        <div class="steps-flow fade-up" id="dashboard-stats" style="margin-bottom: 32px;">
+          <div class="step-item">
+            <div class="step-num" id="stat-total" style="font-size: 1.8rem;">0</div>
+            <h4>Total Filed</h4>
+          </div>
+          <div class="step-item">
+            <div class="step-num" id="stat-ready" style="font-size: 1.8rem;">0</div>
+            <h4>Ready to File</h4>
+          </div>
+          <div class="step-item">
+            <div class="step-num" id="stat-filed" style="font-size: 1.8rem;">0</div>
+            <h4>Filed</h4>
+          </div>
+        </div>
+
+        <!-- Complaint List -->
+        <div class="fade-up" id="dashboard-list">
+          <div class="form-card" style="text-align: center; padding: 60px 20px;">
+            <p style="font-size: 1.2rem; color: var(--text-muted);">Loading complaints...</p>
+          </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 24px;">
+          <button class="btn btn-primary" onclick="showView('form-view')">
+            📝 File New Complaint
+          </button>
+        </div>
+      </div>
+    </section>
   </div>
 
   <script src="/static/js/app.js"></script>

@@ -82,6 +82,9 @@ async function submitComplaint(e) {
 // ─── Render Results ───────────────────────────────────────────────────────────
 
 function renderResults(data) {
+  // Store tracking ID for PDF/WhatsApp actions
+  currentTrackingId = data.tracking_id;
+  
   // Tracking ID
   document.getElementById('result-tracking-id').textContent = data.tracking_id;
 
@@ -159,6 +162,147 @@ function copyDraft() {
     setTimeout(() => (btn.textContent = 'Copy'), 2000);
   });
 }
+
+
+// ─── PDF Download ─────────────────────────────────────────────────────────────
+
+let currentTrackingId = null;
+
+function downloadPDF() {
+  if (!currentTrackingId) {
+    showToast('No complaint to download.', 'error');
+    return;
+  }
+  
+  const btn = document.getElementById('btn-download-pdf');
+  const originalText = btn.textContent;
+  btn.textContent = '⏳ Generating...';
+  btn.disabled = true;
+  
+  fetch(`${API_BASE}/api/complaints/${currentTrackingId}/pdf`)
+    .then(res => {
+      if (!res.ok) throw new Error('PDF generation failed');
+      return res.blob();
+    })
+    .then(blob => {
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Awaaz_Complaint_${currentTrackingId}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+      showToast('PDF downloaded successfully!');
+    })
+    .catch(err => {
+      showToast('Failed to generate PDF. Please try again.', 'error');
+      console.error(err);
+    })
+    .finally(() => {
+      btn.textContent = originalText;
+      btn.disabled = false;
+    });
+}
+
+
+// ─── WhatsApp Share ───────────────────────────────────────────────────────────
+
+function shareWhatsApp() {
+  if (!currentTrackingId) {
+    showToast('No complaint to share.', 'error');
+    return;
+  }
+  
+  fetch(`${API_BASE}/api/complaints/${currentTrackingId}/whatsapp`)
+    .then(res => res.json())
+    .then(data => {
+      window.open(data.whatsapp_url, '_blank');
+      showToast('Opening WhatsApp...');
+    })
+    .catch(err => {
+      showToast('Failed to generate share link.', 'error');
+      console.error(err);
+    });
+}
+
+
+// ─── Dashboard ────────────────────────────────────────────────────────────────
+
+async function loadDashboard() {
+  const listEl = document.getElementById('dashboard-list');
+  
+  try {
+    const response = await fetch(`${API_BASE}/api/complaints`);
+    const data = await response.json();
+    const complaints = data.complaints || [];
+    
+    // Update stats
+    document.getElementById('stat-total').textContent = complaints.length;
+    document.getElementById('stat-ready').textContent = complaints.filter(c => c.status === 'ready').length;
+    document.getElementById('stat-filed').textContent = complaints.filter(c => c.status === 'filed').length;
+    
+    if (complaints.length === 0) {
+      listEl.innerHTML = `
+        <div class="form-card" style="text-align: center; padding: 60px 20px;">
+          <p style="font-size: 3rem; margin-bottom: 12px;">📭</p>
+          <p style="font-size: 1.1rem; color: var(--text-secondary);">No complaints filed yet.</p>
+          <button class="btn btn-primary" style="margin-top: 16px;" onclick="showView('form-view')">File Your First Complaint →</button>
+        </div>
+      `;
+      return;
+    }
+    
+    const categoryEmojis = {
+      cybercrime: '🛡️', consumer: '🛒', municipal: '🏛️', rti: '📋',
+      police: '🚔', rera: '🏠', railways: '🚂', tax: '💰', labour: '👷',
+    };
+    
+    const statusColors = {
+      draft: '#6b7280', ready: '#10b981', filed: '#3b82f6',
+      acknowledged: '#8b5cf6', in_progress: '#f59e0b',
+      resolved: '#10b981', escalated: '#ef4444', closed: '#6b7280',
+    };
+    
+    listEl.innerHTML = complaints.map(c => `
+      <div class="result-card" style="margin-bottom: 16px; cursor: default;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
+          <div style="flex: 1; min-width: 200px;">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+              <span style="font-size: 1.3rem;">${categoryEmojis[c.category] || '📝'}</span>
+              <span style="font-family: monospace; font-size: 0.85rem; color: var(--accent); font-weight: 700;">${c.tracking_id}</span>
+              <span style="font-size: 0.7rem; padding: 2px 8px; border-radius: 20px; font-weight: 600; color: #fff; background: ${statusColors[c.status] || '#6b7280'};">${c.status.toUpperCase()}</span>
+            </div>
+            <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5; margin: 0;">${c.summary || 'No summary'}</p>
+            <p style="color: var(--text-muted); font-size: 0.75rem; margin-top: 6px;">
+              ${c.authority || ''} · ${c.created_at ? new Date(c.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : ''}
+            </p>
+          </div>
+          <div style="display: flex; gap: 8px; flex-shrink: 0;">
+            <button class="btn btn-secondary btn-sm" onclick="window.open('/api/complaints/${c.tracking_id}/pdf')" style="font-size: 0.75rem; padding: 6px 12px;">📄 PDF</button>
+            <button class="btn btn-secondary btn-sm" onclick="shareDashboardWhatsApp('${c.tracking_id}')" style="font-size: 0.75rem; padding: 6px 12px; background: #25D366; border-color: #25D366; color: #fff;">💬</button>
+          </div>
+        </div>
+      </div>
+    `).join('');
+    
+  } catch (err) {
+    listEl.innerHTML = `
+      <div class="form-card" style="text-align: center; padding: 40px 20px;">
+        <p style="color: var(--text-muted);">Failed to load complaints. Please try again.</p>
+      </div>
+    `;
+    console.error(err);
+  }
+}
+
+function shareDashboardWhatsApp(trackingId) {
+  fetch(`${API_BASE}/api/complaints/${trackingId}/whatsapp`)
+    .then(res => res.json())
+    .then(data => window.open(data.whatsapp_url, '_blank'))
+    .catch(err => showToast('Failed to generate share link.', 'error'));
+}
+
 
 // ─── Toast Notifications ──────────────────────────────────────────────────────
 
@@ -240,3 +384,4 @@ document.addEventListener('DOMContentLoaded', () => {
   const form = document.getElementById('complaint-form');
   if (form) form.addEventListener('submit', submitComplaint);
 });
+
