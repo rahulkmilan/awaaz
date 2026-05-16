@@ -8,7 +8,7 @@
 [![Python](https://img.shields.io/badge/Python-3.12-blue?logo=python&logoColor=white)](https://python.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 [![Groq](https://img.shields.io/badge/AI-Groq%20Llama%203.3-orange?logo=meta&logoColor=white)](https://groq.com)
-[![Tests](https://img.shields.io/badge/Tests-pytest-yellow?logo=pytest&logoColor=white)](https://pytest.org)
+[![Tests](https://github.com/rahulkmilan/awaaz/actions/workflows/tests.yml/badge.svg)](https://github.com/rahulkmilan/awaaz/actions/workflows/tests.yml)
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 
 ---
