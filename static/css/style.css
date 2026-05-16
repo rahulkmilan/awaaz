@@ -721,6 +721,10 @@ body {
   .complaint-section { padding: 50px 0; }
   .section-header { margin-bottom: 32px; }
   .section-header h2 { font-size: 1.6rem; }
+
+  .templates-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 @media (max-width: 480px) {
@@ -732,6 +736,10 @@ body {
   .form-card { padding: 18px; border-radius: var(--radius-lg); }
   .result-card { padding: 16px; }
   .template-card { padding: 10px 12px; font-size: 0.8rem; }
+
+  .templates-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* ─── Quick Templates ─────────────────────────────────────────────────────── */
@@ -747,34 +755,11 @@ body {
 }
 
 .templates-grid {
-  display: -webkit-box;
-  display: -ms-flexbox;
-  display: flex;
-  -ms-flex-wrap: wrap;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
   max-width: 700px;
   margin: 0 auto;
-}
-
-.templates-grid .template-card {
-  -webkit-box-flex: 1;
-  -ms-flex: 1 1 calc(33.333% - 10px);
-  flex: 1 1 calc(33.333% - 10px);
-  min-width: 180px;
-  margin: 5px;
-}
-
-@supports (display: grid) {
-  .templates-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 10px;
-  }
-  .templates-grid .template-card {
-    margin: 0;
-    flex: none;
-    min-width: auto;
-  }
 }
 
 .template-card {
@@ -787,25 +772,22 @@ body {
   font-size: 0.85rem;
   font-weight: 500;
   cursor: pointer;
-  -webkit-transition: all 0.2s ease;
   transition: all 0.2s ease;
   text-align: left;
-  display: -webkit-box;
-  display: -ms-flexbox;
   display: flex;
-  -webkit-box-align: center;
-  -ms-flex-align: center;
   align-items: center;
-  gap: 8px;
 }
 
-.template-card span { font-size: 1.1rem; margin-right: 4px; }
+.template-card span {
+  font-size: 1.1rem;
+  margin-right: 8px;
+  flex-shrink: 0;
+}
 
 .template-card:hover {
   background: var(--bg-card-hover);
   border-color: var(--border-glow);
   color: var(--text-primary);
-  -webkit-transform: translateY(-2px);
   transform: translateY(-2px);
   box-shadow: var(--shadow-glow);
 }
@@ -813,16 +795,9 @@ body {
 /* ─── Language Selector ───────────────────────────────────────────────────── */
 
 .lang-container {
-  display: -webkit-box;
-  display: -ms-flexbox;
   display: flex;
-  -ms-flex-wrap: wrap;
   flex-wrap: wrap;
-  margin: -4px;
-}
-
-.lang-container .lang-btn {
-  margin: 4px;
+  gap: 8px;
 }
 
 /* ─── Voice Input ─────────────────────────────────────────────────────────── */
