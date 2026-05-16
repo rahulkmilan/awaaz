@@ -24,12 +24,15 @@
   <!-- Navigation -->
   <nav class="nav">
     <div class="nav-inner">
-      <div class="nav-logo">Awaaz <span>v2.0</span></div>
-      <div class="nav-links">
-        <a href="#" class="nav-link active" data-view="hero-view" onclick="showView('hero-view')">Home</a>
-        <a href="#" class="nav-link" data-view="form-view" onclick="showView('form-view')">File Complaint</a>
-        <a href="#" class="nav-link" data-view="dashboard-view" onclick="showView('dashboard-view'); loadDashboard();">Dashboard</a>
-        <a href="#" class="nav-link btn btn-primary btn-sm" onclick="showView('form-view')">Get Started →</a>
+      <div class="nav-logo">Awaaz <span>v2.1</span></div>
+      <button class="nav-toggle" id="nav-toggle" onclick="toggleMobileNav()" aria-label="Toggle menu">
+        <span></span><span></span><span></span>
+      </button>
+      <div class="nav-links" id="nav-links">
+        <a href="#" class="nav-link active" data-view="hero-view" onclick="showView('hero-view'); closeMobileNav()">Home</a>
+        <a href="#" class="nav-link" data-view="form-view" onclick="showView('form-view'); closeMobileNav()">File Complaint</a>
+        <a href="#" class="nav-link" data-view="dashboard-view" onclick="showView('dashboard-view'); loadDashboard(); closeMobileNav()">Dashboard</a>
+        <a href="#" class="nav-link btn btn-primary btn-sm" onclick="showView('form-view'); closeMobileNav()">Get Started →</a>
       </div>
     </div>
   </nav>

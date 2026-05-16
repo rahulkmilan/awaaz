@@ -505,6 +505,22 @@ function newComplaint() {
   showView('form-view');
 }
 
+// ─── Mobile Nav ───────────────────────────────────────────────────────────────
+
+function toggleMobileNav() {
+  const toggle = document.getElementById('nav-toggle');
+  const links = document.getElementById('nav-links');
+  toggle.classList.toggle('active');
+  links.classList.toggle('open');
+}
+
+function closeMobileNav() {
+  const toggle = document.getElementById('nav-toggle');
+  const links = document.getElementById('nav-links');
+  if (toggle) toggle.classList.remove('active');
+  if (links) links.classList.remove('open');
+}
+
 // ─── Init ─────────────────────────────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', () => {
