@@ -188,8 +188,8 @@
 
         <!-- Quick Templates -->
         <div class="fade-up" style="margin-bottom: 24px;">
-          <p style="text-align: center; color: var(--text-muted); font-size: 0.85rem; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">Quick Start Templates</p>
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; max-width: 700px; margin: 0 auto;">
+          <p class="templates-title">Quick Start Templates</p>
+          <div class="templates-grid">
             <button type="button" class="template-card" onclick="useTemplate('upi')">
               <span>🛡️</span> UPI / Bank Fraud
             </button>
@@ -248,7 +248,7 @@
 
             <div class="form-group">
               <label class="form-label" for="complaint-language">Draft Language</label>
-              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <div class="lang-container">
                 <button type="button" class="lang-btn active" data-lang="en" onclick="selectLang(this)">🇬🇧 English</button>
                 <button type="button" class="lang-btn" data-lang="hi" onclick="selectLang(this)">🇮🇳 हिंदी</button>
                 <button type="button" class="lang-btn" data-lang="ml" onclick="selectLang(this)">🏝️ മലയാളം</button>
