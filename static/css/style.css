@@ -619,6 +619,101 @@ body {
   .result-card { padding: 20px; }
 }
 
+/* ─── Quick Templates ─────────────────────────────────────────────────────── */
+
+.template-card {
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.template-card span { font-size: 1.1rem; }
+
+.template-card:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--border-glow);
+  color: var(--text-primary);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-glow);
+}
+
+/* ─── Voice Input ─────────────────────────────────────────────────────────── */
+
+.voice-btn {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+
+.voice-btn:hover {
+  background: var(--accent-glow);
+  border-color: var(--accent);
+  transform: scale(1.1);
+}
+
+.voice-btn.recording {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: var(--danger);
+  animation: voicePulse 1.5s ease-in-out infinite;
+}
+
+@keyframes voicePulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+  50% { box-shadow: 0 0 0 12px rgba(239, 68, 68, 0); }
+}
+
+/* ─── Language Selector ───────────────────────────────────────────────────── */
+
+.lang-btn {
+  padding: 8px 16px;
+  border-radius: 50px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.lang-btn:hover {
+  background: rgba(245, 158, 11, 0.08);
+  border-color: rgba(245, 158, 11, 0.25);
+  color: var(--text-primary);
+}
+
+.lang-btn.active {
+  background: var(--accent-gradient);
+  border-color: transparent;
+  color: #000;
+  font-weight: 700;
+  box-shadow: 0 2px 12px rgba(245, 158, 11, 0.3);
+}
+
 /* ─── Animations ──────────────────────────────────────────────────────────── */
 
 .fade-up {
@@ -636,3 +731,4 @@ body {
 .stagger-2 { transition-delay: 0.2s; }
 .stagger-3 { transition-delay: 0.3s; }
 .stagger-4 { transition-delay: 0.4s; }
+

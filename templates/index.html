@@ -183,21 +183,52 @@
           <p>Describe your problem in your own words. Be as detailed as possible.</p>
         </div>
 
+        <!-- Quick Templates -->
+        <div class="fade-up" style="margin-bottom: 24px;">
+          <p style="text-align: center; color: var(--text-muted); font-size: 0.85rem; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">Quick Start Templates</p>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; max-width: 700px; margin: 0 auto;">
+            <button type="button" class="template-card" onclick="useTemplate('upi')">
+              <span>🛡️</span> UPI / Bank Fraud
+            </button>
+            <button type="button" class="template-card" onclick="useTemplate('pothole')">
+              <span>🕳️</span> Pothole / Road
+            </button>
+            <button type="button" class="template-card" onclick="useTemplate('product')">
+              <span>📦</span> Wrong Product
+            </button>
+            <button type="button" class="template-card" onclick="useTemplate('builder')">
+              <span>🏗️</span> Builder Delay
+            </button>
+            <button type="button" class="template-card" onclick="useTemplate('noise')">
+              <span>🔊</span> Noise / Pollution
+            </button>
+            <button type="button" class="template-card" onclick="useTemplate('harassment')">
+              <span>🚨</span> Harassment
+            </button>
+          </div>
+        </div>
+
         <div class="form-card fade-up">
           <form id="complaint-form">
             <div class="form-group">
               <label class="form-label" for="complaint-text">Your Complaint</label>
-              <textarea
-                id="complaint-text"
-                class="form-textarea"
-                placeholder="Example: I received a call from someone pretending to be from my bank. They asked for my OTP and ₹25,000 was transferred from my account..."
-                required
-                minlength="10"
-              ></textarea>
-              <div class="form-hint">
+              <div style="position: relative;">
+                <textarea
+                  id="complaint-text"
+                  class="form-textarea"
+                  placeholder="Example: I received a call from someone pretending to be from my bank. They asked for my OTP and ₹25,000 was transferred from my account..."
+                  required
+                  minlength="10"
+                ></textarea>
+                <button type="button" id="voice-btn" class="voice-btn" onclick="toggleVoice()" title="Speak your complaint">
+                  🎤
+                </button>
+              </div>
+              <div class="form-hint" style="display: flex; justify-content: space-between; align-items: center;">
                 <a href="#" onclick="fillExample(); return false;" style="color: var(--accent); text-decoration: none;">
-                  ✨ Try an example complaint
+                  ✨ Try an example
                 </a>
+                <span id="voice-status" style="font-size: 0.75rem; color: var(--text-muted);"></span>
               </div>
             </div>
 
@@ -210,6 +241,19 @@
                 <label class="form-label" for="user-email">Email (optional)</label>
                 <input type="email" id="user-email" class="form-input" placeholder="rahul@email.com">
               </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="complaint-language">Draft Language</label>
+              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <button type="button" class="lang-btn active" data-lang="en" onclick="selectLang(this)">🇬🇧 English</button>
+                <button type="button" class="lang-btn" data-lang="hi" onclick="selectLang(this)">🇮🇳 हिंदी</button>
+                <button type="button" class="lang-btn" data-lang="ml" onclick="selectLang(this)">🏝️ മലയാളം</button>
+                <button type="button" class="lang-btn" data-lang="ta" onclick="selectLang(this)">🏛️ தமிழ்</button>
+                <button type="button" class="lang-btn" data-lang="te" onclick="selectLang(this)">🌾 తెలుగు</button>
+                <button type="button" class="lang-btn" data-lang="kn" onclick="selectLang(this)">🏔️ ಕನ್ನಡ</button>
+              </div>
+              <input type="hidden" id="complaint-language" value="en">
             </div>
 
             <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; margin-top: 8px;">
@@ -340,6 +384,23 @@
           <div class="step-item">
             <div class="step-num" id="stat-filed" style="font-size: 1.8rem;">0</div>
             <h4>Filed</h4>
+          </div>
+        </div>
+
+        <!-- Search & Filter -->
+        <div class="fade-up" style="margin-bottom: 20px;">
+          <div style="display: flex; gap: 12px; flex-wrap: wrap; max-width: 700px; margin: 0 auto;">
+            <input type="text" id="dashboard-search" class="form-input" placeholder="🔍 Search complaints..." oninput="filterDashboard()" style="flex: 1; min-width: 200px;">
+            <select id="dashboard-filter" class="form-input" onchange="filterDashboard()" style="width: auto; min-width: 150px; cursor: pointer;">
+              <option value="all">All Categories</option>
+              <option value="cybercrime">🛡️ Cybercrime</option>
+              <option value="consumer">🛒 Consumer</option>
+              <option value="municipal">🏛️ Municipal</option>
+              <option value="police">🚔 Police</option>
+              <option value="rera">🏠 RERA</option>
+              <option value="rti">📋 RTI</option>
+              <option value="railways">🚂 Railways</option>
+            </select>
           </div>
         </div>
 

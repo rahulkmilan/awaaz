@@ -18,6 +18,126 @@ function showView(viewId) {
   const navLink = document.querySelector(`[data-view="${viewId}"]`);
   if (navLink) navLink.classList.add('active');
 }
+// ─── Language Selector ────────────────────────────────────────────────────────
+
+function selectLang(btn) {
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('complaint-language').value = btn.dataset.lang;
+}
+
+// ─── Complaint Templates ──────────────────────────────────────────────────────
+
+const TEMPLATES = {
+  upi: "I received a call from an unknown number. The caller claimed to be from my bank and asked me to share my OTP for verification. After I shared it, ₹____ was transferred from my account via UPI. The transaction happened on [date]. I did not authorize this transfer. The scammer's phone number was [number].",
+  pothole: "There is a dangerous pothole on [road name] near [landmark] in [city/area]. It has been there for over [duration] and multiple vehicles have been damaged. Two-wheelers are especially at risk. Despite several verbal complaints to the local ward office, no action has been taken. This is causing accidents and needs urgent repair.",
+  product: "I ordered [product name] from [website/app] on [date], order ID: [order number]. The product I received is [defective/wrong/damaged]. I contacted customer support on [date] and they promised a refund/replacement within [days], but nothing has been done. I have screenshots and photos as proof.",
+  builder: "I booked a flat in [project name] by [builder name] in [year]. The promised possession date was [date] but the builder has not delivered the flat yet. I have paid ₹____ so far. The builder is not responding to calls or emails. The project was registered under RERA with registration number [number].",
+  noise: "There is excessive noise/air pollution from [source - factory/construction/loudspeaker] located at [address]. This has been going on since [duration]. The noise levels are unbearable, especially during [time]. It is affecting the health and daily life of residents in the area. We request immediate action.",
+  harassment: "I am being harassed by [person/organization]. The incident(s) occurred on [date] at [location]. [Brief description of what happened]. I have [witnesses/evidence/screenshots]. I feel unsafe and request immediate police protection and investigation."
+};
+
+function useTemplate(type) {
+  const textarea = document.getElementById('complaint-text');
+  textarea.value = TEMPLATES[type] || '';
+  textarea.focus();
+  textarea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  showToast('Template loaded — fill in the [details] and submit.');
+}
+
+// ─── Voice Input ──────────────────────────────────────────────────────────────
+
+let recognition = null;
+let isRecording = false;
+
+function toggleVoice() {
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    showToast('Voice input not supported in this browser. Try Chrome.', 'error');
+    return;
+  }
+
+  const btn = document.getElementById('voice-btn');
+  const status = document.getElementById('voice-status');
+
+  if (isRecording) {
+    recognition.stop();
+    isRecording = false;
+    btn.classList.remove('recording');
+    btn.textContent = '🎤';
+    status.textContent = '';
+    return;
+  }
+
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SpeechRecognition();
+  recognition.lang = 'en-IN';
+  recognition.continuous = true;
+  recognition.interimResults = true;
+
+  const textarea = document.getElementById('complaint-text');
+  let finalTranscript = textarea.value;
+
+  recognition.onstart = () => {
+    isRecording = true;
+    btn.classList.add('recording');
+    btn.textContent = '⏹️';
+    status.textContent = '🔴 Listening...';
+  };
+
+  recognition.onresult = (event) => {
+    let interim = '';
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      if (event.results[i].isFinal) {
+        finalTranscript += event.results[i][0].transcript + ' ';
+      } else {
+        interim += event.results[i][0].transcript;
+      }
+    }
+    textarea.value = finalTranscript + interim;
+  };
+
+  recognition.onerror = (event) => {
+    isRecording = false;
+    btn.classList.remove('recording');
+    btn.textContent = '🎤';
+    status.textContent = '';
+    if (event.error !== 'aborted') {
+      showToast('Voice error: ' + event.error, 'error');
+    }
+  };
+
+  recognition.onend = () => {
+    isRecording = false;
+    btn.classList.remove('recording');
+    btn.textContent = '🎤';
+    status.textContent = isRecording ? '' : '✅ Done';
+    setTimeout(() => { status.textContent = ''; }, 2000);
+  };
+
+  recognition.start();
+}
+
+// ─── Dashboard Filter ─────────────────────────────────────────────────────────
+
+let allComplaints = [];
+
+function filterDashboard() {
+  const search = (document.getElementById('dashboard-search')?.value || '').toLowerCase();
+  const category = document.getElementById('dashboard-filter')?.value || 'all';
+
+  const filtered = allComplaints.filter(c => {
+    const matchSearch = !search ||
+      (c.tracking_id || '').toLowerCase().includes(search) ||
+      (c.summary || '').toLowerCase().includes(search) ||
+      (c.authority || '').toLowerCase().includes(search) ||
+      (c.description || '').toLowerCase().includes(search);
+    const matchCategory = category === 'all' || c.category === category;
+    return matchSearch && matchCategory;
+  });
+
+  renderDashboardList(filtered);
+}
+
 
 // ─── Complaint Filing ─────────────────────────────────────────────────────────
 
@@ -58,6 +178,7 @@ async function submitComplaint(e) {
         user_name: document.getElementById('user-name')?.value || null,
         user_email: document.getElementById('user-email')?.value || null,
         user_city: 'Kochi',
+        language: document.getElementById('complaint-language')?.value || 'en',
       }),
     });
 
@@ -235,56 +356,14 @@ async function loadDashboard() {
   try {
     const response = await fetch(`${API_BASE}/api/complaints`);
     const data = await response.json();
-    const complaints = data.complaints || [];
+    allComplaints = data.complaints || [];
     
     // Update stats
-    document.getElementById('stat-total').textContent = complaints.length;
-    document.getElementById('stat-ready').textContent = complaints.filter(c => c.status === 'ready').length;
-    document.getElementById('stat-filed').textContent = complaints.filter(c => c.status === 'filed').length;
+    document.getElementById('stat-total').textContent = allComplaints.length;
+    document.getElementById('stat-ready').textContent = allComplaints.filter(c => c.status === 'ready').length;
+    document.getElementById('stat-filed').textContent = allComplaints.filter(c => c.status === 'filed').length;
     
-    if (complaints.length === 0) {
-      listEl.innerHTML = `
-        <div class="form-card" style="text-align: center; padding: 60px 20px;">
-          <p style="font-size: 3rem; margin-bottom: 12px;">📭</p>
-          <p style="font-size: 1.1rem; color: var(--text-secondary);">No complaints filed yet.</p>
-          <button class="btn btn-primary" style="margin-top: 16px;" onclick="showView('form-view')">File Your First Complaint →</button>
-        </div>
-      `;
-      return;
-    }
-    
-    const categoryEmojis = {
-      cybercrime: '🛡️', consumer: '🛒', municipal: '🏛️', rti: '📋',
-      police: '🚔', rera: '🏠', railways: '🚂', tax: '💰', labour: '👷',
-    };
-    
-    const statusColors = {
-      draft: '#6b7280', ready: '#10b981', filed: '#3b82f6',
-      acknowledged: '#8b5cf6', in_progress: '#f59e0b',
-      resolved: '#10b981', escalated: '#ef4444', closed: '#6b7280',
-    };
-    
-    listEl.innerHTML = complaints.map(c => `
-      <div class="result-card" style="margin-bottom: 16px; cursor: default;">
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
-          <div style="flex: 1; min-width: 200px;">
-            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
-              <span style="font-size: 1.3rem;">${categoryEmojis[c.category] || '📝'}</span>
-              <span style="font-family: monospace; font-size: 0.85rem; color: var(--accent); font-weight: 700;">${c.tracking_id}</span>
-              <span style="font-size: 0.7rem; padding: 2px 8px; border-radius: 20px; font-weight: 600; color: #fff; background: ${statusColors[c.status] || '#6b7280'};">${c.status.toUpperCase()}</span>
-            </div>
-            <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5; margin: 0;">${c.summary || 'No summary'}</p>
-            <p style="color: var(--text-muted); font-size: 0.75rem; margin-top: 6px;">
-              ${c.authority || ''} · ${c.created_at ? new Date(c.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : ''}
-            </p>
-          </div>
-          <div style="display: flex; gap: 8px; flex-shrink: 0;">
-            <button class="btn btn-secondary btn-sm" onclick="window.open('/api/complaints/${c.tracking_id}/pdf')" style="font-size: 0.75rem; padding: 6px 12px;">📄 PDF</button>
-            <button class="btn btn-secondary btn-sm" onclick="shareDashboardWhatsApp('${c.tracking_id}')" style="font-size: 0.75rem; padding: 6px 12px; background: #25D366; border-color: #25D366; color: #fff;">💬</button>
-          </div>
-        </div>
-      </div>
-    `).join('');
+    renderDashboardList(allComplaints);
     
   } catch (err) {
     listEl.innerHTML = `
@@ -295,6 +374,56 @@ async function loadDashboard() {
     console.error(err);
   }
 }
+
+function renderDashboardList(complaints) {
+  const listEl = document.getElementById('dashboard-list');
+  
+  if (complaints.length === 0) {
+    const hasAny = allComplaints.length > 0;
+    listEl.innerHTML = `
+      <div class="form-card" style="text-align: center; padding: 60px 20px;">
+        <p style="font-size: 3rem; margin-bottom: 12px;">${hasAny ? '🔍' : '📭'}</p>
+        <p style="font-size: 1.1rem; color: var(--text-secondary);">${hasAny ? 'No complaints match your search.' : 'No complaints filed yet.'}</p>
+        ${!hasAny ? '<button class="btn btn-primary" style="margin-top: 16px;" onclick="showView(\'form-view\')">File Your First Complaint →</button>' : ''}
+      </div>
+    `;
+    return;
+  }
+  
+  const categoryEmojis = {
+    cybercrime: '🛡️', consumer: '🛒', municipal: '🏛️', rti: '📋',
+    police: '🚔', rera: '🏠', railways: '🚂', tax: '💰', labour: '👷',
+  };
+  
+  const statusColors = {
+    draft: '#6b7280', ready: '#10b981', filed: '#3b82f6',
+    acknowledged: '#8b5cf6', in_progress: '#f59e0b',
+    resolved: '#10b981', escalated: '#ef4444', closed: '#6b7280',
+  };
+  
+  listEl.innerHTML = complaints.map(c => `
+    <div class="result-card" style="margin-bottom: 16px; cursor: default;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
+        <div style="flex: 1; min-width: 200px;">
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+            <span style="font-size: 1.3rem;">${categoryEmojis[c.category] || '📝'}</span>
+            <span style="font-family: monospace; font-size: 0.85rem; color: var(--accent); font-weight: 700;">${c.tracking_id}</span>
+            <span style="font-size: 0.7rem; padding: 2px 8px; border-radius: 20px; font-weight: 600; color: #fff; background: ${statusColors[c.status] || '#6b7280'};">${c.status.toUpperCase()}</span>
+          </div>
+          <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5; margin: 0;">${c.summary || 'No summary'}</p>
+          <p style="color: var(--text-muted); font-size: 0.75rem; margin-top: 6px;">
+            ${c.authority || ''} · ${c.created_at ? new Date(c.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : ''}
+          </p>
+        </div>
+        <div style="display: flex; gap: 8px; flex-shrink: 0;">
+          <button class="btn btn-secondary btn-sm" onclick="window.open('/api/complaints/${c.tracking_id}/pdf')" style="font-size: 0.75rem; padding: 6px 12px;">📄 PDF</button>
+          <button class="btn btn-secondary btn-sm" onclick="shareDashboardWhatsApp('${c.tracking_id}')" style="font-size: 0.75rem; padding: 6px 12px; background: #25D366; border-color: #25D366; color: #fff;">💬</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
 
 function shareDashboardWhatsApp(trackingId) {
   fetch(`${API_BASE}/api/complaints/${trackingId}/whatsapp`)

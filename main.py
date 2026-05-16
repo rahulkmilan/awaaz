@@ -17,19 +17,31 @@ from pydantic import BaseModel
 from typing import Optional
 import os
 import io
+import re
 import ast
+import html
+import logging
 import urllib.parse
 
 from database import get_db, init_db
 from models import Complaint, ComplaintStatus
 from ai_engine import process_complaint
 
+# ─── Structured Logging ───────────────────────────────────────────────────────
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S"
+)
+logger = logging.getLogger("awaaz")
+
 # ─── App Setup ────────────────────────────────────────────────────────────────
 
 app = FastAPI(
     title="Awaaz",
     description="Your Voice. Actually Heard. — AI-powered government complaint filing.",
-    version="1.0.0"
+    version="2.1.0"
 )
 
 app.add_middleware(
@@ -40,6 +52,23 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# ─── Rate Limiting ────────────────────────────────────────────────────────────
+
+try:
+    from slowapi import Limiter, _rate_limit_exceeded_handler
+    from slowapi.util import get_remote_address
+    from slowapi.errors import RateLimitExceeded
+
+    limiter = Limiter(key_func=get_remote_address)
+    app.state.limiter = limiter
+    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+    RATE_LIMITING_ENABLED = True
+    logger.info("Rate limiting enabled (slowapi)")
+except ImportError:
+    # slowapi not installed — run without rate limiting
+    RATE_LIMITING_ENABLED = False
+    logger.warning("slowapi not installed — rate limiting disabled")
+
 # Serve static files
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
@@ -48,13 +77,35 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 def on_startup():
     """Initialize database on startup."""
     init_db()
-    print("\n=== Awaaz is running! ===")
-    print("   -> Open http://localhost:8000 in your browser")
+    logger.info("Awaaz is running!")
+    logger.info("Open http://localhost:8000 in your browser")
     if os.getenv("GROQ_API_KEY"):
-        print("   -> AI Mode: LIVE (Groq AI connected - FREE)")
+        logger.info("AI Mode: LIVE (Groq AI connected)")
     else:
-        print("   -> AI Mode: DEMO (set GROQ_API_KEY for live AI)")
-    print()
+        logger.info("AI Mode: DEMO (set GROQ_API_KEY for live AI)")
+    logger.info("Rate limiting: %s", "enabled" if RATE_LIMITING_ENABLED else "disabled")
+
+
+# ─── Input Sanitization ──────────────────────────────────────────────────────
+
+def sanitize_input(text: str, max_length: int = 5000) -> str:
+    """
+    Sanitize user input before processing.
+    - Strips HTML/script tags
+    - Truncates to max length
+    - Removes null bytes
+    """
+    if not text:
+        return ""
+    # Remove null bytes
+    text = text.replace("\x00", "")
+    # Strip HTML tags
+    text = re.sub(r"<[^>]+>", "", text)
+    # Escape remaining HTML entities
+    text = html.unescape(text)
+    # Truncate
+    text = text[:max_length]
+    return text.strip()
 
 
 # ─── Request/Response Models ──────────────────────────────────────────────────
@@ -65,6 +116,7 @@ class ComplaintRequest(BaseModel):
     user_email: Optional[str] = None
     user_phone: Optional[str] = None
     user_city: Optional[str] = "Kochi"
+    language: Optional[str] = "en"
 
 
 class ComplaintStatusUpdate(BaseModel):
@@ -80,29 +132,41 @@ async def home():
         return HTMLResponse(content=f.read())
 
 
-@app.post("/api/complaints")
-async def create_complaint(req: ComplaintRequest, db: Session = Depends(get_db)):
+# Conditionally apply rate limit decorator
+def _create_complaint_handler(req: ComplaintRequest, request: Request, db: Session = Depends(get_db)):
     """
     Process a complaint description and return AI-generated guidance.
     This is the core endpoint — takes plain text, returns everything.
     """
-    if not req.description or len(req.description.strip()) < 10:
+    # Sanitize input
+    description = sanitize_input(req.description)
+
+    if not description or len(description) < 10:
         raise HTTPException(
             status_code=400,
             detail="Please describe your problem in at least a few words."
         )
-    
+
+    logger.info("Processing complaint: %d chars, language=%s", len(description), req.language or "en")
+
     # Process with AI engine
-    result = process_complaint(req.description.strip())
-    
+    try:
+        result = process_complaint(description, language=req.language or "en")
+    except Exception as e:
+        logger.error("AI engine error: %s", str(e))
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to process your complaint. Please try again."
+        )
+
     # Save to database
     complaint = Complaint(
         tracking_id=result["tracking_id"],
-        user_name=req.user_name,
-        user_email=req.user_email,
-        user_phone=req.user_phone,
-        user_city=req.user_city,
-        original_description=req.description.strip(),
+        user_name=sanitize_input(req.user_name or "", max_length=100),
+        user_email=sanitize_input(req.user_email or "", max_length=200),
+        user_phone=sanitize_input(req.user_phone or "", max_length=15),
+        user_city=sanitize_input(req.user_city or "Kochi", max_length=100),
+        original_description=description,
         category=result["category"],
         subcategory=result.get("subcategory", "general"),
         ai_draft=result["draft"],
@@ -114,16 +178,31 @@ async def create_complaint(req: ComplaintRequest, db: Session = Depends(get_db))
         legal_rights=str(result.get("legal_rights", [])),
         status=ComplaintStatus.READY
     )
-    
+
     db.add(complaint)
     db.commit()
     db.refresh(complaint)
-    
+
+    logger.info("Complaint created: %s (category=%s, mode=%s)",
+                complaint.tracking_id, result["category"], result.get("mode", "unknown"))
+
     return {
         "success": True,
         "complaint_id": complaint.id,
         **result
     }
+
+
+# Apply rate limiting if available
+if RATE_LIMITING_ENABLED:
+    @app.post("/api/complaints")
+    @limiter.limit("10/minute")
+    async def create_complaint(req: ComplaintRequest, request: Request, db: Session = Depends(get_db)):
+        return _create_complaint_handler(req, request, db)
+else:
+    @app.post("/api/complaints")
+    async def create_complaint(req: ComplaintRequest, request: Request, db: Session = Depends(get_db)):
+        return _create_complaint_handler(req, request, db)
 
 
 @app.get("/api/complaints/{tracking_id}")
@@ -189,8 +268,11 @@ async def update_status(
     if not complaint:
         raise HTTPException(status_code=404, detail="Complaint not found")
     
+    old_status = complaint.status
     complaint.status = update.status
     db.commit()
+
+    logger.info("Status updated: %s (%s → %s)", tracking_id, old_status, update.status)
     
     return {"success": True, "status": update.status}
 
@@ -369,6 +451,7 @@ async def export_complaint_pdf(tracking_id: str, db: Session = Depends(get_db)):
     buffer.seek(0)
     
     filename = f"Awaaz_Complaint_{tracking_id}.pdf"
+    logger.info("PDF exported: %s", tracking_id)
     return StreamingResponse(
         buffer,
         media_type="application/pdf",
@@ -379,6 +462,10 @@ async def export_complaint_pdf(tracking_id: str, db: Session = Depends(get_db)):
 def _parse_list_field(field_value):
     """Safely parse a stringified list from the database."""
     if not field_value:
+        return []
+    # Guard against excessively long strings
+    if len(field_value) > 50000:
+        logger.warning("List field too long (%d chars), truncating", len(field_value))
         return []
     try:
         parsed = ast.literal_eval(field_value)
@@ -421,5 +508,7 @@ async def health():
     return {
         "status": "healthy",
         "service": "Awaaz",
-        "ai_mode": "live" if os.getenv("GROQ_API_KEY") else "demo"
+        "version": "2.1.0",
+        "ai_mode": "live" if os.getenv("GROQ_API_KEY") else "demo",
+        "rate_limiting": RATE_LIMITING_ENABLED
     }

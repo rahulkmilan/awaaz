@@ -12,7 +12,10 @@ import os
 import json
 import random
 import string
+import logging
 from datetime import datetime
+
+logger = logging.getLogger("awaaz.ai")
 
 # Try to import Groq — free tier, 14,400 requests/day
 try:
@@ -413,7 +416,7 @@ Enclosures:
 
 # ─── Live Mode (Groq — FREE, blazing fast) ────────────────────────────────────
 
-def _process_with_groq(description: str) -> dict:
+def _process_with_groq(description: str, language: str = "en") -> dict:
     """
     Process complaint using Groq (Llama 3.3 70B) for production-quality results.
     FREE tier: 14,400 requests/day. Responses in <1 second.
@@ -424,7 +427,27 @@ def _process_with_groq(description: str) -> dict:
     
     client = Groq(api_key=api_key)
     
-    system_prompt = """You are Awaaz, an AI legal assistant specializing in Indian government complaint filing.
+    lang_names = {
+        "en": "English",
+        "hi": "Hindi (Devanagari script)",
+        "ml": "Malayalam (Malayalam script)",
+        "ta": "Tamil (Tamil script)",
+        "te": "Telugu (Telugu script)",
+        "kn": "Kannada (Kannada script)",
+    }
+    lang_name = lang_names.get(language, "English")
+    
+    lang_instruction = ""
+    if language != "en":
+        lang_instruction = f"""
+CRITICAL LANGUAGE INSTRUCTION:
+The user wants the response in {lang_name}.
+Write the "draft", "summary", "filing_guide", "evidence_checklist", and "legal_rights" fields in {lang_name}.
+Keep "category", "subcategory", "authority", "authority_portal", "authority_helpline" in English (these are system identifiers).
+The complaint draft MUST be in {lang_name} — this is what the user will submit to the authorities.
+"""
+
+    system_prompt = f"""You are Awaaz, an AI legal assistant specializing in Indian government complaint filing.
 
 Your job is to:
 1. Categorize the user's complaint into the correct authority
@@ -432,11 +455,11 @@ Your job is to:
 3. Provide a step-by-step filing guide
 4. List required evidence
 5. Explain the user's legal rights
-
+{lang_instruction}
 Categories: cybercrime, consumer, municipal, rti, police, rera, railways, tax, labour, other
 
 Respond ONLY with valid JSON (no markdown, no code fences) with these exact fields:
-{
+{{
   "category": "string (one of the categories above)",
   "subcategory": "string (specific type within category)",
   "confidence": 85,
@@ -448,7 +471,7 @@ Respond ONLY with valid JSON (no markdown, no code fences) with these exact fiel
   "filing_guide": ["step 1", "step 2", "..."],
   "evidence_checklist": ["item with emoji prefix", "..."],
   "legal_rights": ["right with law section reference", "..."]
-}
+}}
 
 Be specific to Indian law. Mention exact sections of relevant acts (IT Act, CrPC, Consumer Protection Act, etc.).
 Be empathetic but professional. Draft the complaint in a formal tone that government officials will take seriously.
@@ -466,31 +489,47 @@ Include specific details from the user's description in the complaint draft."""
             response_format={"type": "json_object"},
         )
         
-        result = json.loads(response.choices[0].message.content)
+        raw_content = response.choices[0].message.content
+        result = json.loads(raw_content)
+        
+        # Validate required fields exist
+        required_fields = ["category", "draft", "summary", "authority", "authority_portal"]
+        missing = [f for f in required_fields if f not in result]
+        if missing:
+            logger.warning("Groq response missing fields: %s — falling back to demo", missing)
+            return None
+        
+        logger.info("Groq response OK: category=%s, confidence=%s",
+                     result.get("category"), result.get("confidence"))
         return result
+    except json.JSONDecodeError as e:
+        logger.error("Groq returned malformed JSON: %s", str(e))
+        return None
     except Exception as e:
-        print(f"Groq API error: {e}")
+        logger.error("Groq API error: %s", str(e))
         return None
 
 
 # ─── Main Public API ─────────────────────────────────────────────────────────
 
-def process_complaint(description: str) -> dict:
+def process_complaint(description: str, language: str = "en") -> dict:
     """
     Process a complaint description and return categorization, draft, and guidance.
     Uses Groq (free) if API key is available, falls back to demo mode.
+    Supports multilingual output when using Groq live mode.
     """
     tracking_id = generate_tracking_id()
     
     # Try Groq live mode first (FREE)
     if GROQ_AVAILABLE and os.getenv("GROQ_API_KEY"):
-        result = _process_with_groq(description)
+        result = _process_with_groq(description, language=language)
         if result:
             result["tracking_id"] = tracking_id
             result["mode"] = "ai"
+            result["language"] = language
             return result
     
-    # Fall back to demo mode
+    # Fall back to demo mode (English only)
     categorization = _categorize_demo(description)
     complaint_data = _draft_complaint_demo(
         description,
@@ -504,6 +543,8 @@ def process_complaint(description: str) -> dict:
         "subcategory": categorization["subcategory"],
         "confidence": categorization["confidence"],
         "mode": "demo",
+        "language": "en",
         **complaint_data
     }
+
 

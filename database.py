@@ -1,19 +1,32 @@
 """
 Database configuration for Awaaz.
-Uses SQLite for MVP — zero setup, works immediately.
-Switch to PostgreSQL for production.
+Supports SQLite (local dev) and PostgreSQL (production).
+
+Set DATABASE_URL env variable for PostgreSQL:
+  DATABASE_URL=postgresql://user:pass@host:5432/awaaz
+
+Falls back to SQLite if DATABASE_URL is not set.
 """
 
+import os
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-SQLALCHEMY_DATABASE_URL = "sqlite:///./awaaz.db"
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./awaaz.db")
 
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL,
-    connect_args={"check_same_thread": False}  # SQLite-specific
-)
+# Render uses "postgres://" but SQLAlchemy needs "postgresql://"
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
+# SQLite needs check_same_thread=False; PostgreSQL does not
+if DATABASE_URL.startswith("sqlite"):
+    engine = create_engine(
+        DATABASE_URL,
+        connect_args={"check_same_thread": False}
+    )
+else:
+    engine = create_engine(DATABASE_URL)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
